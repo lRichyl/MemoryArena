@@ -11,4 +11,4 @@ Arena           new
 Maximum speed-up factor : 20x.
 Minimun speed-up factor : 16x.
 
-Compiled with g++ using optimization level O2.
+Compiled with g++ using optimization level O2 .
