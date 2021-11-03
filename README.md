@@ -13,6 +13,7 @@ new
 5.8ms - 6.1ms
 
 Maximum speed-up factor : 20x.
+
 Minimum speed-up factor : 16x.
 
 Compiled with g++ using optimization level O2 .
