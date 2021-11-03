@@ -7,7 +7,7 @@ Currently fragmentation is not being handled but it is still functional.
 Running on a Ryzen 3 3200G
 Time ranges for allocating 100000 ints.
 
-Arena           
+Arena
 280us - 370us   
 new
 5.8ms - 6.1ms
