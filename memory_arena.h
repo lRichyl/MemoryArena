@@ -2,6 +2,8 @@
 #include <assert.h>
 #include <cstdlib>
 #include <forward_list>
+#include <stdint.h>
+#include <stdio.h>
 
 struct ArenaFreeInfo{
 	void *data_pointer;
@@ -30,7 +32,12 @@ struct MemoryArena{
 	std::forward_list<ArenaAllocatedInfo> allocated_list;
 };
 
-void init_memory_arena(MemoryArena *arena, uint32_t size_in_bytes){
+// inline void init_memory_arena(MemoryArena *arena, uint32_t size_in_bytes);
+// inline void* get_fittable_memory(MemoryArena *arena, uint32_t size);
+// inline bool belongs_to_arena(MemoryArena *arena, void *address);
+// inline void print_arena_info(MemoryArena *arena);
+
+inline void init_memory_arena(MemoryArena *arena, uint32_t size_in_bytes){
 	arena->memory           = new char[size_in_bytes];
 	arena->total_memory     = size_in_bytes;
 	arena->available_memory = size_in_bytes;
@@ -44,7 +51,7 @@ void init_memory_arena(MemoryArena *arena, uint32_t size_in_bytes){
 	arena->free_list.push_front({arena->current, size_in_bytes});
 }
 
-void* get_fittable_memory(MemoryArena *arena, uint32_t size){
+inline void* get_fittable_memory(MemoryArena *arena, uint32_t size){
 	void *result;
 	for(auto it = arena->free_list.begin(); it != arena->free_list.end(); it++){
 		if(size <= it->size){
@@ -57,6 +64,20 @@ void* get_fittable_memory(MemoryArena *arena, uint32_t size){
 	}
 	return NULL;
 }
+
+inline bool belongs_to_arena(MemoryArena *arena, void *address){
+	if(address >= arena->start && address < arena->end){
+		return true;
+	}
+	return false;
+}
+
+inline void print_arena_info(MemoryArena *arena){
+	printf("\nTotal memory: %d bytes\n", arena->total_memory);
+	printf("Allocated memory: %d bytes\n", arena->allocated_memory);
+	printf("Available memory: %d bytes\n", arena->available_memory);
+}
+
 
 template<typename T>
 T* allocate_from_arena(MemoryArena *arena){
@@ -79,12 +100,7 @@ T* allocate_from_arena(MemoryArena *arena){
 	// assert(allocated);
 }
 
-bool belongs_to_arena(MemoryArena *arena, void *address){
-	if(address >= arena->start && address < arena->end){
-		return true;
-	}
-	return false;
-}
+
 
 template<typename T>
 void free_from_arena(MemoryArena *arena, T *allocated){
@@ -98,8 +114,5 @@ void free_from_arena(MemoryArena *arena, T *allocated){
 	}
 }
 
-void print_arena_info(MemoryArena *arena){
-	printf("\nTotal memory: %d bytes\n", arena->total_memory);
-	printf("Allocated memory: %d bytes\n", arena->allocated_memory);
-	printf("Available memory: %d bytes\n", arena->available_memory);
-}
+
+

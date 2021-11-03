@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "memory_arena.h"
 #include "time.h"
+#include "memory_arena.h"
 
 // This is a test for a basic memory arena allocator capable of allocating any type.
 // Currently fragmentation is not being handled but it is still functional.
@@ -151,7 +151,6 @@ int main(void){
 		float ms = get_time_in_ms(start_time, end_time, perf_count_frequency);
 		printf("Allocation time using new: %f\n", ms/1000.0f);
 	}
-	
 		
 	return 0;
 }
