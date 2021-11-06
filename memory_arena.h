@@ -2,10 +2,17 @@
 #include <assert.h>
 #include <cstdlib>
 #include <forward_list>
+#include <utility>
 #include <stdint.h>
 #include <stdio.h>
+#include <vector>
 
 struct ArenaFreeInfo{
+	// ArenaFreeInfo(void *data, uint32_t s){
+		// data_pointer = data;
+		// size = s;
+	// }
+	
 	void *data_pointer;
 	uint32_t size;
 };
@@ -28,7 +35,7 @@ struct MemoryArena{
 	uint32_t available_memory;
 	
 	ArenaFreeInfo free_info;
-	std::forward_list<ArenaFreeInfo> free_list;
+	std::vector<ArenaFreeInfo> free_list;
 	std::forward_list<ArenaAllocatedInfo> allocated_list;
 };
 
@@ -48,7 +55,7 @@ inline void init_memory_arena(MemoryArena *arena, uint32_t size_in_bytes){
 	
 	arena->end = (char*)arena->start + size_in_bytes;
 	
-	arena->free_list.push_front({arena->current, size_in_bytes});
+	arena->free_list.push_back({arena->current, size_in_bytes});
 }
 
 inline void* get_fittable_memory(MemoryArena *arena, uint32_t size){
@@ -100,15 +107,48 @@ T* allocate_from_arena(MemoryArena *arena){
 	// assert(allocated);
 }
 
+template<typename T>
+T* allocate_array_from_arena(MemoryArena *arena, int array_size){
+	void *fittable_memory = get_fittable_memory(arena, sizeof(T) * array_size);
+	if(fittable_memory){
+		T* data;
+		data = (T*)fittable_memory;
+		// printf("Allocated Address : %X\n", fittable_memory);
+		arena->allocated_memory += sizeof(T) * array_size;
+		arena->available_memory = arena->total_memory - arena->allocated_memory;
+		
+		return data;
+	}
+	printf("No memory left in the arena\n");
+	assert(fittable_memory);
+	return NULL;
+}
+
 
 
 template<typename T>
-void free_from_arena(MemoryArena *arena, T *allocated){
+void free_from_arena(MemoryArena *arena, T *&allocated){
 	if(!allocated) return;
 	if(!arena) return;
 	if(belongs_to_arena(arena, allocated)){
-		arena->free_list.push_front({allocated, sizeof(T)});
+		ArenaFreeInfo free_node = {allocated, sizeof(T)};
+		arena->free_list.push_back(std::move(free_node));
 		arena->available_memory += sizeof(T);
+		arena->allocated_memory = arena->total_memory - arena->available_memory;
+		// printf("%X\n", allocated);
+		allocated = NULL;
+		// printf("%X\n", allocated);
+	}
+}
+
+template<typename T>
+void free_array_from_arena(MemoryArena *arena, T *allocated, int array_size){
+	if(!allocated) return;
+	if(!arena) return;
+	if(belongs_to_arena(arena, allocated)){
+		ArenaFreeInfo free_node = {allocated, sizeof(T) * array_size};
+		arena->free_list.push_back(std::move(free_node));
+		arena->available_memory += sizeof(T) * array_size;
 		arena->allocated_memory = arena->total_memory - arena->available_memory;
 		allocated = NULL;
 	}

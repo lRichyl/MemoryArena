@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdint.h>
+#include <assert.h>
 
 #include "time.h"
 #include "memory_arena.h"
@@ -19,6 +20,7 @@
 //Compile with g++ using -O2.
 
 
+
 struct Person{
 	char *name;
 	int age;
@@ -33,7 +35,7 @@ int main(void){
 		float *b = NULL;
 		Person *p = NULL;
 		
-		// The template function "allocate_from_arena" is used to allocate any type in the arena.
+		// The templated function "allocate_from_arena" is used to allocate any type in the arena.
 		a = allocate_from_arena<int>(&arena);
 		b = allocate_from_arena<float>(&arena);
 		p = allocate_from_arena<Person>(&arena);
@@ -59,12 +61,13 @@ int main(void){
 		// The arena info is printed to see how much memory we have left before and after calling the function "free_from_arena".
 		print_arena_info(&arena);
 		free_from_arena(&arena, a);
+		assert(!a);
 		print_arena_info(&arena);
 	}
 	
 	{
 		//This purpose of this part is to test the functionality of "free_from_arena".
-		printf("\nSEGUNDA PARTE\n");
+		printf("\nFREEING FROM THE ARENA\n");
 		MemoryArena arena;
 		init_memory_arena(&arena, 12);
 		int *a;
@@ -83,7 +86,10 @@ int main(void){
 		printf("%d\n", *c);
 		
 		//If the following line is commented the allocation will fail and the program will end because there is no more room in the arena.
+		// printf("%X\n", b);
 		free_from_arena(&arena, b);
+		// printf("%X\n", b);
+		assert(!b);
 		
 		d = allocate_from_arena<int>(&arena);
 		*d = 45;
@@ -125,32 +131,80 @@ int main(void){
 	
 	const int NUMBER_OF_PERSONS = 100000;
 	{
-		printf("\nSPEED TEST : STRUCTS\n");
+		printf("\nSPEED TEST ARENA: STRUCTS\n");
 		MemoryArena arena;
 		init_memory_arena(&arena, NUMBER_OF_PERSONS * sizeof(Person));
 		LARGE_INTEGER start_time = get_time_counter();
+		Person *persons[NUMBER_OF_PERSONS];
 		
 		
 		for(int i = 0; i < NUMBER_OF_PERSONS; i++){
-			Person *person = allocate_from_arena<Person>(&arena);
+			persons[i] = allocate_from_arena<Person>(&arena);
 		}
 		
 		LARGE_INTEGER end_time = get_time_counter();
 		float ms = get_time_in_ms(start_time, end_time, perf_count_frequency);
 		printf("Allocation time using arena: %f\n", ms/1000.0f);
+		// print_arena_info(&arena);
+		
+		// Person *person0 = allocate_from_arena<Person>(&arena);  //No memory in the arena. ERROR.
+		{
+			LARGE_INTEGER start_time = get_time_counter();
+			for(int i = 0; i < NUMBER_OF_PERSONS; i++){
+				free_from_arena(&arena, persons[i]);
+			}
+			//free_array_from_arena(&arena, persons, NUMBER_OF_PERSONS);
+		
+			LARGE_INTEGER end_time = get_time_counter();
+			float ms = get_time_in_ms(start_time, end_time, perf_count_frequency);
+			printf("Deletion time using arena: %f\n", ms/1000.0f);
+		}
+		// free_from_arena(&arena, p);
+		Person *person = allocate_from_arena<Person>(&arena); // We can allocate a new person because we freed space in the arena.
+		print_arena_info(&arena);
+		// printf("%s %d", p->name, p->age );
+		assert(!persons[NUMBER_OF_PERSONS -1]);
+		
 		
 	}
 	
 	{
-		LARGE_INTEGER start_time = get_time_counter();	
+		printf("\nSPEED TEST NEW : STRUCTS\n");
+		LARGE_INTEGER start_time = get_time_counter();
+		Person *persons[NUMBER_OF_PERSONS];
 		for(int i = 0; i < NUMBER_OF_PERSONS; i++){
-			Person *person = new Person;
+			persons[i] = new Person;
 		}
 		
 		LARGE_INTEGER end_time = get_time_counter();
 		float ms = get_time_in_ms(start_time, end_time, perf_count_frequency);
 		printf("Allocation time using new: %f\n", ms/1000.0f);
+		
+		// printf("\nDELETION TEST NEW STRUCTS\n");
+		{
+			LARGE_INTEGER start_time = get_time_counter();	
+			for(int i = 0; i < NUMBER_OF_PERSONS; i++){
+				delete persons[i];
+			}
+			// delete [] persons;
+			LARGE_INTEGER end_time = get_time_counter();
+			float ms = get_time_in_ms(start_time, end_time, perf_count_frequency);
+			printf("Deletion time using new: %f\n", ms/1000.0f);
+		}
 	}
+	
+	// MemoryArena arena;
+	// init_memory_arena(&arena, 12);
+	// int *a = allocate_from_arena<int>(&arena);
+	// int *b = allocate_from_arena<int>(&arena);
+	// int *c = allocate_from_arena<int>(&arena);
+	// print_arena_info(&arena);
+	
+	// free_from_arena(&arena, a);
+	// free_from_arena(&arena, b);
+	// free_from_arena(&arena, c);
+	// print_arena_info(&arena);
+	
 		
 	return 0;
 }
