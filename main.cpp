@@ -192,7 +192,7 @@ int main(void){
 			printf("Deletion time using new: %f\n", ms/1000.0f);
 		}
 	}
-	
+	getchar();
 	// MemoryArena arena;
 	// init_memory_arena(&arena, 12);
 	// int *a = allocate_from_arena<int>(&arena);
